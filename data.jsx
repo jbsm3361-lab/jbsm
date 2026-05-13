@@ -7,8 +7,6 @@ const CATEGORIES = [
   { id: 'travel',   name: '여행',     glyph: '여', count: 9,  hue: 'cyan',   grad: 'linear-gradient(135deg, #22D3EE 0%, #3B82F6 100%)', soft: 'linear-gradient(135deg, #CFFAFE 0%, #DBEAFE 100%)', accent: '#06B6D4' },
   { id: 'food',     name: '맛집',     glyph: '맛', count: 31, hue: 'lime',   grad: 'linear-gradient(135deg, #84CC16 0%, #10B981 100%)', soft: 'linear-gradient(135deg, #ECFCCB 0%, #D1FAE5 100%)', accent: '#10B981' },
   { id: 'game',     name: '게임',     glyph: '게', count: 7,  hue: 'fuchsia',grad: 'linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%)', soft: 'linear-gradient(135deg, #FCE7F3 0%, #EDE9FE 100%)', accent: '#D946EF' },
-  { id: 'fashion',  name: '패션',     glyph: '패', count: 18, hue: 'orange', grad: 'linear-gradient(135deg, #FB7185 0%, #FB923C 100%)', soft: 'linear-gradient(135deg, #FFE4E6 0%, #FFEDD5 100%)', accent: '#F43F5E' },
-  { id: 'memo',     name: '메모',     glyph: '메', count: 42, hue: 'slate',  grad: 'linear-gradient(135deg, #64748B 0%, #1E293B 100%)', soft: 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)', accent: '#475569' },
 ];
 
 const ITEMS = {
@@ -45,15 +43,6 @@ const ITEMS = {
   game: [
     { id: 'g1', title: '발더스 게이트 3', sub: 'PC · RPG',                     tag: '플레이중', fav: true,  date: '2025.05.02', fields: [['플랫폼','PC (Steam)'],['진도','Act 2'],['플레이타임','62시간']], note: '아스타리온 루트 끝내고 셰도우하트 루트 시작.' },
     { id: 'g2', title: '엘든 링: SOTE',  sub: 'PS5 · 소울라이크',             tag: '클리어', fav: true,  date: '2025.02.10', fields: [['플랫폼','PS5']], note: '' },
-  ],
-  fashion: [
-    { id: 'fa1', title: '얼리지 데님',   sub: '청바지 · M사이즈',              tag: '구매',   fav: true,  date: '2025.04.10', fields: [['카테고리','데님'],['사이즈','30'],['가격','189,000원']], note: '핏 진짜 좋음. 한 벌 더 살 듯.' },
-    { id: 'fa2', title: '뉴발란스 992',  sub: '운동화 · 270mm',                tag: '구매',   fav: false, date: '2025.03.05', fields: [['사이즈','270']], note: '' },
-  ],
-  memo: [
-    { id: 'n1', title: '5월 목표',       sub: '운동 · 독서 · 사이드 프로젝트',  tag: '진행중', fav: true,  date: '2025.05.01', fields: [['카테고리','목표']], note: '주 3회 러닝 30분 / 책 2권 완독 / 사이드 프로젝트 MVP까지.' },
-    { id: 'n2', title: '레시피 — 파스타', sub: '알리오 올리오 기본',           tag: '레시피', fav: false, date: '2025.04.22', fields: [['카테고리','레시피']], note: '면 삶기 9분, 마늘 4쪽, 페페론치노 2개.' },
-    { id: 'n3', title: '명함 받은 사람들', sub: '2025년 누적 8명',              tag: '연락처', fav: false, date: '2025.04.18', fields: [['카테고리','연락처']], note: '' },
   ],
 };
 
