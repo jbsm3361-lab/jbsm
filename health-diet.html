@@ -1,0 +1,2036 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>오늘의 건강식단 · 프로토타입</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    font-family: 'Noto Sans KR', system-ui, sans-serif;
+    background: #2a2620;
+    color: #2D2017;
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  @keyframes floatUp {
+    0%   { opacity: 0; transform: translateY(28px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.04); }
+  }
+  @keyframes dot {
+    0%, 80%, 100% { opacity: 0.25; transform: scale(0.7); }
+    40%           { opacity: 1;    transform: scale(1); }
+  }
+  @keyframes spinSlow {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes wave {
+    0%, 100% { transform: scaleY(0.4); }
+    50%      { transform: scaleY(1); }
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel">
+
+// ═══════════════════════════════════════════════════════════════
+// android-frame.jsx
+// ═══════════════════════════════════════════════════════════════
+
+const MD_C = {
+  surface: '#f4fbf8',
+  surfaceVariant: '#dae5e1',
+  inverseOnSurface: '#ecf2ef',
+  secondaryContainer: '#cde8e1',
+  primaryFixedDim: '#83d5c6',
+  onSurface: '#171d1b',
+  onSurfaceVar: '#49454f',
+  onPrimaryContainer: '#00201c',
+  primary: '#006a60',
+  frameBorder: 'rgba(116,119,117,0.5)',
+};
+
+function AndroidStatusBar({ dark = false }) {
+  const c = dark ? '#fff' : MD_C.onSurface;
+  return (
+    <div style={{
+      height: 40, display: 'flex', alignItems: 'center',
+      justifyContent: 'space-between', padding: '0 16px',
+      position: 'relative',
+      fontFamily: 'Roboto, system-ui, sans-serif',
+    }}>
+      <div style={{ width: 128, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 14, fontWeight: 400, letterSpacing: 0.25, lineHeight: '20px', color: c }}>9:30</span>
+      </div>
+      <div style={{
+        position: 'absolute', left: '50%', top: 8, transform: 'translateX(-50%)',
+        width: 24, height: 24, borderRadius: 100, background: '#2e2e2e',
+      }} />
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', paddingRight: 2 }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" style={{ marginRight: -2 }}>
+            <path d="M8 13.3L.67 5.97a10.37 10.37 0 0114.66 0L8 13.3z" fill={c}/>
+          </svg>
+          <svg width="16" height="16" viewBox="0 0 16 16" style={{ marginRight: -2 }}>
+            <path d="M14.67 14.67V1.33L1.33 14.67h13.34z" fill={c}/>
+          </svg>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 16 16">
+          <rect x="3.75" y="2" width="8.5" height="13" rx="1.5" fill={c}/>
+          <rect x="5.5" y="0.9" width="5" height="2" rx="0.5" fill={c}/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function AndroidAppBar({ title = 'Title', large = false }) {
+  const iconDot = (
+    <div style={{
+      width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{ width: 22, height: 22, borderRadius: '50%', background: MD_C.onSurfaceVar, opacity: 0.3 }} />
+    </div>
+  );
+  return (
+    <div style={{ background: MD_C.surface, padding: '4px 4px 0' }}>
+      <div style={{ height: 56, display: 'flex', alignItems: 'center', gap: 4 }}>
+        {iconDot}
+        {!large && (
+          <span style={{
+            flex: 1, fontSize: 22, fontWeight: 400, color: MD_C.onSurface,
+            fontFamily: 'Roboto, system-ui, sans-serif',
+          }}>{title}</span>
+        )}
+        {large && <div style={{ flex: 1 }} />}
+        {iconDot}
+      </div>
+      {large && (
+        <div style={{
+          padding: '16px 16px 20px',
+          fontSize: 28, fontWeight: 400, color: MD_C.onSurface,
+          fontFamily: 'Roboto, system-ui, sans-serif',
+        }}>{title}</div>
+      )}
+    </div>
+  );
+}
+
+function AndroidNavBar({ dark = false }) {
+  return (
+    <div style={{
+      height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <div style={{
+        width: 108, height: 4, borderRadius: 2,
+        background: dark ? '#fff' : MD_C.onSurface, opacity: 0.4,
+      }} />
+    </div>
+  );
+}
+
+function AndroidDevice({
+  children, width = 412, height = 892, dark = false,
+  title, large = false, keyboard = false,
+}) {
+  return (
+    <div style={{
+      width, height, borderRadius: 18, overflow: 'hidden',
+      background: dark ? '#1d1b20' : MD_C.surface,
+      border: `8px solid ${MD_C.frameBorder}`,
+      boxShadow: '0 30px 80px rgba(0,0,0,0.25)',
+      display: 'flex', flexDirection: 'column', boxSizing: 'border-box',
+    }}>
+      <AndroidStatusBar dark={dark} />
+      {title !== undefined && <AndroidAppBar title={title} large={large} />}
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {children}
+      </div>
+      <AndroidNavBar dark={dark} />
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// tweaks-panel.jsx
+// ═══════════════════════════════════════════════════════════════
+
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    transform:scale(var(--dc-inv-zoom,1));transform-origin:bottom right;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+  .twk-field{appearance:none;box-sizing:border-box;width:100%;min-width:0;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;min-height:22px;
+    border-radius:6px;cursor:default;padding:4px 6px;line-height:1.2;
+    overflow-wrap:anywhere}
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+  .twk-num{display:flex;align-items:center;box-sizing:border-box;min-width:0;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+  .twk-chips{display:flex;gap:6px}
+  .twk-chip{position:relative;appearance:none;flex:1;min-width:0;height:46px;
+    padding:0;border:0;border-radius:6px;overflow:hidden;cursor:default;
+    box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.06);
+    transition:transform .12s cubic-bezier(.3,.7,.4,1),box-shadow .12s}
+  .twk-chip:hover{transform:translateY(-1px);
+    box-shadow:0 0 0 .5px rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.12)}
+  .twk-chip[data-on="1"]{box-shadow:0 0 0 1.5px rgba(0,0,0,.85),
+    0 2px 6px rgba(0,0,0,.15)}
+  .twk-chip>span{position:absolute;top:0;bottom:0;right:0;width:34%;
+    display:flex;flex-direction:column;box-shadow:-1px 0 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i{flex:1;box-shadow:0 -1px 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i:first-child{box-shadow:none}
+  .twk-chip svg{position:absolute;top:6px;left:6px;width:13px;height:13px;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+`;
+
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+      ? keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+    window.dispatchEvent(new CustomEvent('tweakchange', { detail: edits }));
+  }, []);
+  return [values, setTweak];
+}
+
+function TweaksPanel({ title = 'Tweaks', noDeckControls = false, children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', clampToViewport);
+      return () => window.removeEventListener('resize', clampToViewport);
+    }
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = {
+        x: startRight - (ev.clientX - sx),
+        y: startBottom - (ev.clientY - sy),
+      };
+      clampToViewport();
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" data-noncommentable=""
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">
+          {children}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function TweakSection({ label, children }) {
+  return (
+    <>
+      <div className="twk-sect">{label}</div>
+      {children}
+    </>
+  );
+}
+
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+
+  const labelLen = (o) => String(typeof o === 'object' ? o.label : o).length;
+  const maxLen = options.reduce((m, o) => Math.max(m, labelLen(o)), 0);
+  const fitsAsSegments = maxLen <= ({ 2: 16, 3: 10 }[options.length] ?? 0);
+  if (!fitsAsSegments) {
+    const resolve = (s) => {
+      const m = options.find((o) => String(typeof o === 'object' ? o.value : o) === s);
+      return m === undefined ? s : typeof m === 'object' ? m.value : m;
+    };
+    return <TweakSelect label={label} value={value} options={options}
+                        onChange={(s) => onChange(resolve(s))} />;
+  }
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+
+  const segAt = (clientX) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const inner = r.width - 4;
+    const i = Math.floor(((clientX - r.left - 2) / inner) * n);
+    return opts[Math.max(0, Math.min(n - 1, i))].value;
+  };
+
+  const onPointerDown = (e) => {
+    setDragging(true);
+    const v0 = segAt(e.clientX);
+    if (v0 !== valueRef.current) onChange(v0);
+    const move = (ev) => {
+      if (!trackRef.current) return;
+      const v = segAt(ev.clientX);
+      if (v !== valueRef.current) onChange(v);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+           className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+
+function TweakToggleInline({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function __twkIsLight(hex) {
+  const h = String(hex).replace('#', '');
+  const x = h.length === 3 ? h.replace(/./g, (c) => c + c) : h.padEnd(6, '0');
+  const n = parseInt(x.slice(0, 6), 16);
+  if (Number.isNaN(n)) return true;
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return r * 299 + g * 587 + b * 114 > 148000;
+}
+
+const __TwkCheck = ({ light }) => (
+  <svg viewBox="0 0 14 14" aria-hidden="true">
+    <path d="M3 7.2 5.8 10 11 4.2" fill="none" strokeWidth="2.2"
+          strokeLinecap="round" strokeLinejoin="round"
+          stroke={light ? 'rgba(0,0,0,.78)' : '#fff'} />
+  </svg>
+);
+
+function TweakColor({ label, value, options, onChange }) {
+  if (!options || !options.length) {
+    return (
+      <div className="twk-row twk-row-h">
+        <div className="twk-lbl"><span>{label}</span></div>
+        <input type="color" className="twk-swatch" value={value}
+               onChange={(e) => onChange(e.target.value)} />
+      </div>
+    );
+  }
+  const key = (o) => String(JSON.stringify(o)).toLowerCase();
+  const cur = key(value);
+  return (
+    <TweakRow label={label}>
+      <div className="twk-chips" role="radiogroup">
+        {options.map((o, i) => {
+          const colors = Array.isArray(o) ? o : [o];
+          const [hero, ...rest] = colors;
+          const sup = rest.slice(0, 4);
+          const on = key(o) === cur;
+          return (
+            <button key={i} type="button" className="twk-chip" role="radio"
+                    aria-checked={on} data-on={on ? '1' : '0'}
+                    aria-label={colors.join(', ')} title={colors.join(' · ')}
+                    style={{ background: hero }}
+                    onClick={() => onChange(o)}>
+              {sup.length > 0 && (
+                <span>
+                  {sup.map((c, j) => <i key={j} style={{ background: c }} />)}
+                </span>
+              )}
+              {on && <__TwkCheck light={__twkIsLight(hero)} />}
+            </button>
+          );
+        })}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakButton({ label, onClick, secondary = false }) {
+  return (
+    <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
+            onClick={onClick}>{label}</button>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// foods-data.jsx
+// ═══════════════════════════════════════════════════════════════
+
+const FOODS = [
+  {
+    id: 'tofu-bibim',
+    name: '두부 강된장 비빔밥',
+    tagline: '부드러운 두부와 채소로 든든하게',
+    why: '소화가 편하면서도 단백질과 식이섬유가 풍부해요',
+    benefits: ['단백질 보충', '소화 잘됨', '혈당 관리'],
+    prepTime: '20분',
+    difficulty: '쉬움',
+    accent: '#E89B5F',
+    placeholderHue: 38,
+    ingredients: [
+      '잡곡밥 한 공기',
+      '두부 반 모',
+      '애호박 1/4개',
+      '당근 조금',
+      '시금치 한 줌',
+      '강된장 두 큰술',
+      '참기름 한 작은술',
+    ],
+    steps: [
+      '두부는 물기를 빼고 으깬 뒤 살짝 볶아 주세요.',
+      '애호박, 당근, 시금치를 잘게 썰어 따로 볶아요.',
+      '잡곡밥 위에 두부와 채소를 색색이 올려 주세요.',
+      '강된장과 참기름을 두르고 잘 비벼 드세요.',
+    ],
+    nutrition: { kcal: 480, protein: 22, carb: 65, fat: 12, sodium: 'M' },
+  },
+  {
+    id: 'mackerel',
+    name: '고등어 무 조림',
+    tagline: '오메가-3로 혈관을 건강하게',
+    why: '혈관에 좋은 지방이 많아 심장 건강에 도움돼요',
+    benefits: ['혈관 건강', '뇌 건강', '오메가-3'],
+    prepTime: '30분',
+    difficulty: '보통',
+    accent: '#D08453',
+    placeholderHue: 22,
+    ingredients: [
+      '고등어 한 마리',
+      '무 1/4개',
+      '대파 한 뿌리',
+      '마늘 다진 것 한 큰술',
+      '간장 두 큰술',
+      '고춧가루 한 큰술',
+      '물 한 컵',
+    ],
+    steps: [
+      '무를 도톰하게 썰어 냄비 바닥에 깔아 주세요.',
+      '손질한 고등어를 무 위에 올려요.',
+      '간장, 마늘, 고춧가루, 물을 섞어 부어 주세요.',
+      '약한 불에서 20분 정도 푹 졸여 주세요.',
+    ],
+    nutrition: { kcal: 420, protein: 28, carb: 18, fat: 24, sodium: 'M' },
+  },
+  {
+    id: 'pumpkin',
+    name: '늙은 호박 영양죽',
+    tagline: '속이 편안한 따끈한 한 그릇',
+    why: '소화가 잘되고 부드러워 속이 편안해요',
+    benefits: ['소화 편함', '식이섬유', '눈 건강'],
+    prepTime: '25분',
+    difficulty: '쉬움',
+    accent: '#E5A557',
+    placeholderHue: 32,
+    ingredients: [
+      '늙은 호박 두 컵',
+      '찹쌀가루 세 큰술',
+      '팥 삶은 것 반 컵',
+      '꿀 또는 설탕 약간',
+      '소금 조금',
+      '물 네 컵',
+    ],
+    steps: [
+      '호박은 푹 삶아 으깨 주세요.',
+      '냄비에 호박, 팥, 물을 넣고 끓여요.',
+      '찹쌀가루를 물에 풀어 천천히 넣어 주세요.',
+      '소금과 꿀로 간을 맞춰 따끈하게 드세요.',
+    ],
+    nutrition: { kcal: 320, protein: 8, carb: 62, fat: 3, sodium: 'L' },
+  },
+  {
+    id: 'chicken-salad',
+    name: '닭가슴살 채소 무침',
+    tagline: '담백한 단백질로 기운을 챙겨요',
+    why: '기름기 적은 단백질로 근육 건강을 지켜요',
+    benefits: ['근육 건강', '저지방', '단백질'],
+    prepTime: '15분',
+    difficulty: '쉬움',
+    accent: '#C9925C',
+    placeholderHue: 28,
+    ingredients: [
+      '닭가슴살 한 덩이',
+      '오이 반 개',
+      '양배추 두 장',
+      '당근 조금',
+      '간장 한 큰술',
+      '식초 한 작은술',
+      '깨소금 약간',
+    ],
+    steps: [
+      '닭가슴살은 푹 삶아 식힌 뒤 결대로 찢어 주세요.',
+      '오이, 양배추, 당근은 가늘게 채 썰어요.',
+      '간장, 식초, 깨소금으로 양념을 만들어요.',
+      '모든 재료를 살살 무쳐 시원하게 드세요.',
+    ],
+    nutrition: { kcal: 280, protein: 32, carb: 14, fat: 8, sodium: 'L' },
+  },
+  {
+    id: 'seaweed',
+    name: '미역국과 잡곡밥',
+    tagline: '몸을 따뜻하게 데우는 한 끼',
+    why: '요오드와 칼슘이 풍부해 뼈 건강에 좋아요',
+    benefits: ['뼈 건강', '혈액 순환', '저칼로리'],
+    prepTime: '25분',
+    difficulty: '쉬움',
+    accent: '#B8794A',
+    placeholderHue: 24,
+    ingredients: [
+      '불린 미역 한 줌',
+      '소고기 양지 100g',
+      '국간장 두 큰술',
+      '마늘 다진 것 한 작은술',
+      '참기름 한 큰술',
+      '물 다섯 컵',
+      '잡곡밥 한 공기',
+    ],
+    steps: [
+      '미역은 물에 불려 먹기 좋게 잘라요.',
+      '소고기는 참기름에 볶다가 미역을 넣어 더 볶아요.',
+      '물을 부어 20분 정도 푹 끓여 주세요.',
+      '국간장과 마늘로 간을 맞춰 잡곡밥과 함께 드세요.',
+    ],
+    nutrition: { kcal: 380, protein: 18, carb: 55, fat: 10, sodium: 'M' },
+  },
+  {
+    id: 'soft-tofu',
+    name: '연두부 들깨탕',
+    tagline: '고소하고 부드러운 보양식',
+    why: '씹기 편하고 칼슘과 단백질이 가득해요',
+    benefits: ['씹기 편함', '칼슘 보충', '고소함'],
+    prepTime: '20분',
+    difficulty: '쉬움',
+    accent: '#D89C66',
+    placeholderHue: 36,
+    ingredients: [
+      '연두부 한 모',
+      '들깨가루 세 큰술',
+      '부추 한 줌',
+      '국간장 한 큰술',
+      '마늘 다진 것 약간',
+      '물 세 컵',
+    ],
+    steps: [
+      '냄비에 물을 끓이고 국간장으로 간해요.',
+      '연두부를 큼직하게 떠 넣어 주세요.',
+      '들깨가루를 풀어 부드럽게 끓여요.',
+      '마지막에 부추를 넣고 한소끔 끓이면 완성이에요.',
+    ],
+    nutrition: { kcal: 240, protein: 16, carb: 12, fat: 14, sodium: 'L' },
+  },
+  {
+    id: 'sprouts',
+    name: '콩나물 잡채',
+    tagline: '아삭한 식감의 가벼운 한 접시',
+    why: '비타민C가 많아 피로 회복에 도움돼요',
+    benefits: ['피로 회복', '비타민', '저칼로리'],
+    prepTime: '15분',
+    difficulty: '쉬움',
+    accent: '#CFA068',
+    placeholderHue: 42,
+    ingredients: [
+      '콩나물 한 봉',
+      '당면 한 줌',
+      '당근 조금',
+      '부추 한 줌',
+      '간장 두 큰술',
+      '참기름 한 큰술',
+      '깨 약간',
+    ],
+    steps: [
+      '당면은 미지근한 물에 불려 두세요.',
+      '콩나물은 살짝 데쳐 물기를 빼요.',
+      '당근, 부추를 채 썰어 함께 볶아요.',
+      '간장과 참기름으로 간하고 깨를 뿌려 드세요.',
+    ],
+    nutrition: { kcal: 300, protein: 10, carb: 48, fat: 7, sodium: 'M' },
+  },
+  {
+    id: 'porridge',
+    name: '전복 야채죽',
+    tagline: '기력 회복엔 든든한 죽 한 그릇',
+    why: '소화가 잘되면서도 영양이 풍부해요',
+    benefits: ['기력 회복', '소화 편함', '미네랄'],
+    prepTime: '35분',
+    difficulty: '보통',
+    accent: '#C28453',
+    placeholderHue: 30,
+    ingredients: [
+      '전복 두 마리',
+      '쌀 한 컵',
+      '당근 조금',
+      '애호박 조금',
+      '참기름 한 큰술',
+      '국간장 한 작은술',
+      '물 다섯 컵',
+    ],
+    steps: [
+      '쌀은 30분 정도 불려 두세요.',
+      '전복은 손질해 얇게 썰어요.',
+      '참기름에 쌀과 전복, 채소를 살짝 볶아요.',
+      '물을 붓고 약한 불에서 푹 끓여 주세요.',
+    ],
+    nutrition: { kcal: 350, protein: 14, carb: 58, fat: 6, sodium: 'L' },
+  },
+];
+
+const HISTORY = [
+  { date: '오늘',     foodId: null },
+  { date: '어제',     foodId: 'seaweed' },
+  { date: '5월 18일', foodId: 'mackerel' },
+  { date: '5월 17일', foodId: 'pumpkin' },
+  { date: '5월 16일', foodId: 'tofu-bibim' },
+  { date: '5월 15일', foodId: 'sprouts' },
+  { date: '5월 14일', foodId: 'soft-tofu' },
+];
+
+const PALETTES = {
+  beige:   { id: 'beige',   label: '베이지+주황', bg: '#F5EBDD', bgSoft: '#EFE0CB', card: '#FFFFFF', accent: '#E89B5F', accentDark: '#C77843', text: '#2D2017', textSoft: '#6E5B4B', border: '#E5D4BC' },
+  cream:   { id: 'cream',   label: '따뜻한 크림',  bg: '#FAF3E7', bgSoft: '#F3E9D5', card: '#FFFFFF', accent: '#D88A55', accentDark: '#B36F3E', text: '#3A2B1F', textSoft: '#7C6753', border: '#EBD9BD' },
+  apricot: { id: 'apricot', label: '부드러운 살구', bg: '#FBE8D6', bgSoft: '#F5D9C0', card: '#FFFFFF', accent: '#E5916A', accentDark: '#C26F4B', text: '#3D2418', textSoft: '#7E5C48', border: '#EFCFAF' },
+};
+
+const SIZE_SCALE = {
+  normal: { label: '보통', mult: 1.00,  base: 22 },
+  large:  { label: '크게', mult: 1.18,  base: 22 },
+  xlarge: { label: '아주 크게', mult: 1.38, base: 22 },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// screens.jsx
+// ═══════════════════════════════════════════════════════════════
+
+function fz(ctx, px) {
+  return Math.round(px * ctx.fontMult);
+}
+
+function FoodPhoto({ food, size = 'large', style }) {
+  const hue = food?.placeholderHue ?? 32;
+  const sizes = {
+    large:  { aspect: '4 / 3', radius: 28 },
+    medium: { aspect: '1 / 1', radius: 20 },
+    small:  { aspect: '1 / 1', radius: 14 },
+    full:   { aspect: '16 / 10', radius: 0 },
+  };
+  const s = sizes[size] || sizes.large;
+  return (
+    <div style={{
+      width: '100%', aspectRatio: s.aspect, borderRadius: s.radius,
+      background: `linear-gradient(135deg, hsl(${hue} 75% 78%) 0%, hsl(${hue + 12} 70% 65%) 60%, hsl(${hue - 6} 65% 55%) 100%)`,
+      position: 'relative', overflow: 'hidden',
+      boxShadow: 'inset 0 -20px 40px rgba(0,0,0,0.08)',
+      ...style,
+    }}>
+      <div style={{
+        position: 'absolute', inset: 0, opacity: 0.18,
+        backgroundImage: 'repeating-linear-gradient(45deg, transparent 0 8px, rgba(255,255,255,0.4) 8px 9px)',
+      }} />
+      <div style={{
+        position: 'absolute', left: '50%', top: '50%',
+        transform: 'translate(-50%, -50%)',
+        fontFamily: 'ui-monospace, monospace',
+        fontSize: size === 'small' ? 10 : size === 'medium' ? 12 : 14,
+        color: 'rgba(255,255,255,0.95)',
+        background: 'rgba(0,0,0,0.18)',
+        padding: size === 'small' ? '3px 7px' : '5px 11px',
+        borderRadius: 999,
+        letterSpacing: 0.4,
+        whiteSpace: 'nowrap',
+      }}>
+        음식 사진
+      </div>
+    </div>
+  );
+}
+
+function TopBar({ ctx, title, onBack, right }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center',
+      padding: '14px 16px 14px 8px',
+      background: ctx.theme.bg,
+      borderBottom: `1px solid ${ctx.theme.border}`,
+      position: 'sticky', top: 0, zIndex: 10,
+    }}>
+      <button onClick={onBack} aria-label="뒤로가기" style={{
+        width: 64, height: 64, borderRadius: 20, border: 'none',
+        background: 'transparent', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+          <path d="M15 5l-7 7 7 7" stroke={ctx.theme.text} strokeWidth="2.5"
+                strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+      <div style={{
+        flex: 1, textAlign: 'center',
+        fontSize: fz(ctx, 24), fontWeight: 700, color: ctx.theme.text,
+        paddingRight: right ? 0 : 64,
+      }}>{title}</div>
+      {right}
+    </div>
+  );
+}
+
+function BenefitChip({ ctx, text, primary = false }) {
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '10px 16px',
+      borderRadius: 999,
+      background: primary ? ctx.theme.accent : ctx.theme.bgSoft,
+      color: primary ? '#fff' : ctx.theme.text,
+      fontSize: fz(ctx, 18), fontWeight: 600,
+      border: primary ? 'none' : `1.5px solid ${ctx.theme.border}`,
+    }}>
+      <span style={{
+        width: 8, height: 8, borderRadius: 999,
+        background: primary ? '#fff' : ctx.theme.accent,
+      }} />
+      {text}
+    </div>
+  );
+}
+
+function VoiceButton({ ctx, label = '음성으로 듣기' }) {
+  const [playing, setPlaying] = React.useState(false);
+  if (!ctx.voiceVisible) return null;
+  return (
+    <button
+      onClick={() => { setPlaying(true); setTimeout(() => setPlaying(false), 2200); }}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        width: '100%', minHeight: 68, padding: '0 24px',
+        borderRadius: 20, border: `2px solid ${ctx.theme.accent}`,
+        background: playing ? ctx.theme.accent : 'transparent',
+        color: playing ? '#fff' : ctx.theme.accentDark,
+        fontSize: fz(ctx, 22), fontWeight: 700, cursor: 'pointer',
+        transition: 'all 0.15s',
+      }}>
+      {playing ? (
+        <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+          {[0,1,2,3].map(i => (
+            <span key={i} style={{
+              width: 4, height: 22, borderRadius: 2, background: '#fff',
+              animation: `wave 0.6s ${i * 0.1}s infinite ease-in-out`,
+            }} />
+          ))}
+        </span>
+      ) : (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path d="M5 9v6h4l5 4V5L9 9H5z" fill={ctx.theme.accentDark}/>
+          <path d="M17 8c1.5 1.5 1.5 6.5 0 8M19.5 5.5c3 3 3 10 0 13"
+                stroke={ctx.theme.accentDark} strokeWidth="2" strokeLinecap="round" fill="none"/>
+        </svg>
+      )}
+      <span>{playing ? '읽고 있어요' : label}</span>
+    </button>
+  );
+}
+
+function BigButton({ ctx, children, onClick, variant = 'primary', icon, style }) {
+  const isPrimary = variant === 'primary';
+  const isGhost = variant === 'ghost';
+  return (
+    <button onClick={onClick} style={{
+      width: '100%', minHeight: 80, padding: '0 28px',
+      borderRadius: ctx.buttonShape === 'square' ? 16 : 999,
+      border: isGhost ? `2.5px solid ${ctx.theme.accent}` : 'none',
+      background: isPrimary ? ctx.theme.accent : isGhost ? 'transparent' : ctx.theme.bgSoft,
+      color: isPrimary ? '#fff' : ctx.theme.accentDark,
+      fontSize: fz(ctx, 24), fontWeight: 800, cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+      boxShadow: isPrimary ? '0 8px 20px rgba(199, 120, 67, 0.25)' : 'none',
+      transition: 'transform 0.1s',
+      ...style,
+    }}
+    onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.97)'}
+    onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+function HomeScreen({ ctx }) {
+  const today = new Date();
+  const dateStr = `${today.getMonth() + 1}월 ${today.getDate()}일`;
+  const dayStr = ['일','월','화','수','목','금','토'][today.getDay()] + '요일';
+  const buttonSize = 280;
+
+  return (
+    <div data-screen-label="01 메인" style={{
+      minHeight: '100%',
+      background: ctx.theme.bg,
+      display: 'flex', flexDirection: 'column',
+    }}>
+      <div style={{
+        padding: '28px 24px 0', display: 'flex',
+        justifyContent: 'space-between', alignItems: 'center',
+      }}>
+        <div>
+          <div style={{ fontSize: fz(ctx, 20), color: ctx.theme.textSoft, fontWeight: 500 }}>
+            {dateStr} {dayStr}
+          </div>
+          <div style={{ fontSize: fz(ctx, 28), fontWeight: 700, color: ctx.theme.text, marginTop: 4 }}>
+            안녕하세요, 황재창 님
+          </div>
+        </div>
+        <button onClick={() => ctx.go('settings')} aria-label="설정" style={{
+          width: 56, height: 56, borderRadius: 16, border: 'none',
+          background: ctx.theme.card, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+        }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="3" stroke={ctx.theme.text} strokeWidth="2"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H2a2 2 0 110-4h.09A1.65 1.65 0 004.6 8a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V2a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H22a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"
+              stroke={ctx.theme.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div style={{ padding: '40px 28px 20px', textAlign: 'center' }}>
+        <div style={{
+          fontSize: fz(ctx, 34), fontWeight: 800, color: ctx.theme.text,
+          lineHeight: 1.35, textWrap: 'pretty',
+        }}>
+          오늘 무엇을<br/>드시면 좋을까요?
+        </div>
+        <div style={{
+          fontSize: fz(ctx, 20), color: ctx.theme.textSoft,
+          marginTop: 14, fontWeight: 500,
+        }}>
+          아래 동그란 버튼을 한 번 눌러주세요
+        </div>
+      </div>
+
+      <div style={{
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px 24px',
+      }}>
+        <button
+          onClick={() => ctx.recommend()}
+          aria-label="오늘의 식단 추천 받기"
+          style={{
+            width: buttonSize, height: buttonSize,
+            borderRadius: ctx.buttonShape === 'square' ? 40 : '50%',
+            border: 'none',
+            background: `radial-gradient(circle at 30% 30%, ${ctx.theme.accent}, ${ctx.theme.accentDark})`,
+            color: '#fff', cursor: 'pointer',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 8,
+            boxShadow: `0 12px 32px ${ctx.theme.accentDark}55, inset 0 -8px 20px rgba(0,0,0,0.12), inset 0 4px 16px rgba(255,255,255,0.25)`,
+            animation: 'pulse 2.8s ease-in-out infinite',
+            transition: 'transform 0.12s',
+          }}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.94)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <svg width="80" height="80" viewBox="0 0 64 64" fill="none">
+            <ellipse cx="20" cy="20" rx="7" ry="11" stroke="#fff" strokeWidth="3.5"/>
+            <line x1="20" y1="31" x2="20" y2="52" stroke="#fff" strokeWidth="3.5" strokeLinecap="round"/>
+            <line x1="42" y1="12" x2="42" y2="52" stroke="#fff" strokeWidth="3.5" strokeLinecap="round"/>
+            <line x1="38" y1="12" x2="38" y2="24" stroke="#fff" strokeWidth="3.5" strokeLinecap="round"/>
+            <line x1="46" y1="12" x2="46" y2="24" stroke="#fff" strokeWidth="3.5" strokeLinecap="round"/>
+          </svg>
+          <div style={{ fontSize: fz(ctx, 30), fontWeight: 900, lineHeight: 1.2, marginTop: 6 }}>
+            오늘의 식단
+          </div>
+          <div style={{ fontSize: fz(ctx, 22), fontWeight: 700, opacity: 0.92 }}>
+            추천 받기
+          </div>
+        </button>
+      </div>
+
+      <div style={{
+        padding: '16px 20px 28px',
+        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12,
+      }}>
+        <BottomMenuItem ctx={ctx} label="지난 기록" onClick={() => ctx.go('history')}
+          icon={<path d="M3 12a9 9 0 1015-6.7M3 3v6h6M12 7v5l3 2" stroke={ctx.theme.accentDark} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>}/>
+        <BottomMenuItem ctx={ctx} label="내 건강 정보" onClick={() => ctx.go('health')}
+          icon={<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" stroke={ctx.theme.accentDark} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>}/>
+        <BottomMenuItem ctx={ctx} label="가족에게" onClick={() => ctx.go('share')}
+          icon={<><circle cx="9" cy="8" r="3.5" stroke={ctx.theme.accentDark} strokeWidth="2.2" fill="none"/><circle cx="17" cy="10" r="2.5" stroke={ctx.theme.accentDark} strokeWidth="2.2" fill="none"/><path d="M2.5 19c0-3 3-5 6.5-5s6.5 2 6.5 5M16 19c0-2 2-3.5 4-3.5s1.5 0 1.5 0" stroke={ctx.theme.accentDark} strokeWidth="2.2" fill="none" strokeLinecap="round"/></>}/>
+      </div>
+    </div>
+  );
+}
+
+function BottomMenuItem({ ctx, label, onClick, icon }) {
+  return (
+    <button onClick={onClick} style={{
+      background: ctx.theme.card,
+      border: `1.5px solid ${ctx.theme.border}`,
+      borderRadius: 20, padding: '18px 8px',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+      cursor: 'pointer', minHeight: 96,
+    }}>
+      <svg width="34" height="34" viewBox="0 0 24 24">{icon}</svg>
+      <div style={{ fontSize: fz(ctx, 17), fontWeight: 700, color: ctx.theme.text, textAlign: 'center', lineHeight: 1.2 }}>
+        {label}
+      </div>
+    </button>
+  );
+}
+
+function LoadingScreen({ ctx }) {
+  return (
+    <div data-screen-label="02 로딩" style={{
+      minHeight: '100%', background: ctx.theme.bg,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: 32, animation: 'fadeIn 0.3s',
+    }}>
+      <div style={{
+        width: 160, height: 160, position: 'relative',
+        marginBottom: 36,
+      }}>
+        <div style={{
+          position: 'absolute', inset: 0,
+          border: `8px solid ${ctx.theme.bgSoft}`,
+          borderRadius: '50%',
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0,
+          border: `8px solid transparent`,
+          borderTopColor: ctx.theme.accent,
+          borderRightColor: ctx.theme.accent,
+          borderRadius: '50%',
+          animation: 'spinSlow 1.4s linear infinite',
+        }} />
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 56,
+        }}>
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2a10 10 0 100 20 10 10 0 000-20z M8 14s1.5 2 4 2 4-2 4-2 M9 9h.01M15 9h.01"
+              stroke={ctx.theme.accent} strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div style={{ fontSize: fz(ctx, 30), fontWeight: 800, color: ctx.theme.text, textAlign: 'center', lineHeight: 1.3 }}>
+        오늘 좋은 식단을<br/>찾고 있어요
+      </div>
+      <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>
+        {[0,1,2].map(i => (
+          <span key={i} style={{
+            width: 14, height: 14, borderRadius: 999,
+            background: ctx.theme.accent,
+            animation: `dot 1.2s ${i * 0.16}s infinite ease-in-out`,
+          }}/>
+        ))}
+      </div>
+      <div style={{ marginTop: 28, fontSize: fz(ctx, 18), color: ctx.theme.textSoft }}>
+        잠시만 기다려 주세요
+      </div>
+    </div>
+  );
+}
+
+function ResultScreen({ ctx }) {
+  const food = ctx.currentFood;
+  if (!food) return null;
+  const photoFirst = ctx.resultLayout === 'photo';
+
+  return (
+    <div data-screen-label="03 추천 결과" style={{
+      minHeight: '100%', background: ctx.theme.bg,
+      display: 'flex', flexDirection: 'column',
+    }}>
+      <div style={{ padding: '12px 12px 0', display: 'flex', justifyContent: 'space-between' }}>
+        <button onClick={() => ctx.go('home')} aria-label="처음으로" style={{
+          width: 64, height: 64, borderRadius: 20, border: 'none',
+          background: 'transparent', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
+            <path d="M3 12L12 4l9 8M5 10v10h14V10" stroke={ctx.theme.text} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+        <button onClick={() => ctx.go('share')} aria-label="가족에게 공유" style={{
+          height: 56, padding: '0 22px', borderRadius: 999,
+          border: `2px solid ${ctx.theme.border}`,
+          background: ctx.theme.card,
+          fontSize: fz(ctx, 18), fontWeight: 700, color: ctx.theme.text,
+          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <circle cx="18" cy="5" r="3" stroke={ctx.theme.accentDark} strokeWidth="2"/>
+            <circle cx="6" cy="12" r="3" stroke={ctx.theme.accentDark} strokeWidth="2"/>
+            <circle cx="18" cy="19" r="3" stroke={ctx.theme.accentDark} strokeWidth="2"/>
+            <line x1="8.6" y1="10.5" x2="15.4" y2="6.5" stroke={ctx.theme.accentDark} strokeWidth="2"/>
+            <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" stroke={ctx.theme.accentDark} strokeWidth="2"/>
+          </svg>
+          가족에게
+        </button>
+      </div>
+
+      <div style={{
+        flex: 1, padding: '8px 20px 24px',
+        animation: 'floatUp 0.55s cubic-bezier(.2,.7,.2,1) both',
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: 18 }}>
+          <div style={{
+            display: 'inline-block', padding: '8px 18px', borderRadius: 999,
+            background: ctx.theme.bgSoft,
+            fontSize: fz(ctx, 18), fontWeight: 700, color: ctx.theme.accentDark,
+          }}>
+            오늘은 이 음식이 좋겠어요
+          </div>
+        </div>
+
+        {photoFirst && (
+          <div style={{ marginBottom: 20 }}>
+            <FoodPhoto food={food} size="large" />
+          </div>
+        )}
+
+        <div style={{
+          fontSize: fz(ctx, photoFirst ? 44 : 52),
+          fontWeight: 900, color: ctx.theme.text,
+          textAlign: 'center', lineHeight: 1.15, letterSpacing: '-0.02em',
+          textWrap: 'balance',
+        }}>
+          {food.name}
+        </div>
+
+        <div style={{
+          fontSize: fz(ctx, 22), color: ctx.theme.textSoft,
+          textAlign: 'center', marginTop: 14, fontWeight: 500,
+          lineHeight: 1.4,
+        }}>
+          {food.tagline}
+        </div>
+
+        {!photoFirst && (
+          <div style={{ marginTop: 22 }}>
+            <FoodPhoto food={food} size="medium" style={{ maxWidth: 220, margin: '0 auto' }}/>
+          </div>
+        )}
+
+        <div style={{
+          marginTop: 22, padding: '20px 22px',
+          background: ctx.theme.card, borderRadius: 24,
+          border: `1.5px solid ${ctx.theme.border}`,
+          display: 'flex', alignItems: 'flex-start', gap: 14,
+        }}>
+          <div style={{
+            flexShrink: 0, width: 44, height: 44, borderRadius: 12,
+            background: ctx.theme.accent, color: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 26, fontWeight: 800,
+          }}>♥</div>
+          <div style={{
+            fontSize: fz(ctx, 22), color: ctx.theme.text, lineHeight: 1.45,
+            fontWeight: 600, textWrap: 'pretty',
+          }}>
+            {food.why}
+          </div>
+        </div>
+
+        <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+          {food.benefits.map((b, i) => (
+            <BenefitChip key={i} ctx={ctx} text={b} primary={i === 0} />
+          ))}
+        </div>
+
+        <div style={{
+          marginTop: 20, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
+        }}>
+          <InfoBlock ctx={ctx} label="준비 시간" value={food.prepTime}/>
+          <InfoBlock ctx={ctx} label="난이도" value={food.difficulty}/>
+        </div>
+
+        <div style={{ marginTop: 18 }}>
+          <VoiceButton ctx={ctx} />
+        </div>
+
+        <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <BigButton ctx={ctx} onClick={() => ctx.go('detail')}
+            icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M3 6h18M3 12h18M3 18h12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>}>
+            자세히 보기
+          </BigButton>
+          <BigButton ctx={ctx} variant="ghost" onClick={() => ctx.recommend()}
+            icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M3 12a9 9 0 0115-6.7L21 8M21 3v5h-5M21 12a9 9 0 01-15 6.7L3 16M3 21v-5h5"
+                stroke={ctx.theme.accentDark} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>}>
+            다시 추천
+          </BigButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InfoBlock({ ctx, label, value }) {
+  return (
+    <div style={{
+      background: ctx.theme.card, borderRadius: 20,
+      padding: '16px 18px',
+      border: `1.5px solid ${ctx.theme.border}`,
+      textAlign: 'center',
+    }}>
+      <div style={{ fontSize: fz(ctx, 16), color: ctx.theme.textSoft, fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: fz(ctx, 28), color: ctx.theme.text, fontWeight: 800, marginTop: 4 }}>{value}</div>
+    </div>
+  );
+}
+
+function DetailScreen({ ctx }) {
+  const food = ctx.currentFood;
+  const [tab, setTab] = React.useState('ingredients');
+  if (!food) return null;
+
+  const tabs = [
+    { id: 'ingredients', label: '재료' },
+    { id: 'steps',       label: '조리법' },
+    { id: 'nutrition',   label: '영양' },
+  ];
+
+  return (
+    <div data-screen-label="04 상세" style={{ minHeight: '100%', background: ctx.theme.bg }}>
+      <TopBar ctx={ctx} title={food.name} onBack={() => ctx.go('result')} />
+
+      <div style={{ padding: '16px 20px 0' }}>
+        <FoodPhoto food={food} size="large" />
+      </div>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+        margin: '20px 20px 8px', background: ctx.theme.bgSoft,
+        borderRadius: 18, padding: 6, gap: 4,
+      }}>
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{
+            padding: '14px 8px', borderRadius: 14, border: 'none',
+            background: tab === t.id ? ctx.theme.card : 'transparent',
+            fontSize: fz(ctx, 20), fontWeight: 800,
+            color: tab === t.id ? ctx.theme.text : ctx.theme.textSoft,
+            cursor: 'pointer',
+            boxShadow: tab === t.id ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      <div style={{ padding: '12px 20px 28px', animation: 'fadeIn 0.25s' }}>
+        {tab === 'ingredients' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: fz(ctx, 18), color: ctx.theme.textSoft, fontWeight: 600, marginBottom: 4 }}>
+              1인분 기준이에요
+            </div>
+            {food.ingredients.map((ing, i) => (
+              <div key={i} style={{
+                background: ctx.theme.card, borderRadius: 18,
+                border: `1.5px solid ${ctx.theme.border}`,
+                padding: '18px 20px',
+                display: 'flex', alignItems: 'center', gap: 16,
+                minHeight: 68,
+              }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 999,
+                  background: ctx.theme.bgSoft, color: ctx.theme.accentDark,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: fz(ctx, 18), fontWeight: 800, flexShrink: 0,
+                }}>{i + 1}</div>
+                <div style={{ fontSize: fz(ctx, 22), color: ctx.theme.text, fontWeight: 600 }}>
+                  {ing}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === 'steps' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {food.steps.map((step, i) => (
+              <div key={i} style={{
+                background: ctx.theme.card, borderRadius: 22,
+                border: `1.5px solid ${ctx.theme.border}`,
+                padding: '20px 22px',
+                display: 'flex', gap: 16,
+              }}>
+                <div style={{
+                  flexShrink: 0, width: 48, height: 48, borderRadius: 14,
+                  background: ctx.theme.accent, color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: fz(ctx, 24), fontWeight: 900,
+                }}>{i + 1}</div>
+                <div style={{
+                  fontSize: fz(ctx, 22), color: ctx.theme.text,
+                  fontWeight: 500, lineHeight: 1.5, paddingTop: 4,
+                  textWrap: 'pretty',
+                }}>
+                  {step}
+                </div>
+              </div>
+            ))}
+            <div style={{ marginTop: 8 }}>
+              <VoiceButton ctx={ctx} label="조리법 읽어주기" />
+            </div>
+          </div>
+        )}
+
+        {tab === 'nutrition' && (
+          <div>
+            <div style={{
+              background: ctx.theme.card, borderRadius: 22,
+              border: `1.5px solid ${ctx.theme.border}`,
+              padding: 24, textAlign: 'center',
+            }}>
+              <div style={{ fontSize: fz(ctx, 18), color: ctx.theme.textSoft, fontWeight: 600 }}>
+                한 끼당 열량
+              </div>
+              <div style={{
+                fontSize: fz(ctx, 64), fontWeight: 900,
+                color: ctx.theme.accentDark, marginTop: 6, lineHeight: 1,
+              }}>
+                {food.nutrition.kcal}
+                <span style={{ fontSize: fz(ctx, 24), color: ctx.theme.textSoft, marginLeft: 6, fontWeight: 700 }}>kcal</span>
+              </div>
+            </div>
+            <div style={{
+              marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10,
+            }}>
+              <NutrientCard ctx={ctx} label="단백질" value={`${food.nutrition.protein}g`} color="#7CA982"/>
+              <NutrientCard ctx={ctx} label="탄수화물" value={`${food.nutrition.carb}g`} color="#E5A557"/>
+              <NutrientCard ctx={ctx} label="지방"   value={`${food.nutrition.fat}g`}  color="#D08453"/>
+            </div>
+            <div style={{
+              marginTop: 14, background: ctx.theme.card, borderRadius: 18,
+              border: `1.5px solid ${ctx.theme.border}`, padding: '18px 22px',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <div style={{ fontSize: fz(ctx, 20), fontWeight: 700, color: ctx.theme.text }}>
+                나트륨
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {['L','M','H'].map(level => (
+                  <div key={level} style={{
+                    width: 22, height: 22, borderRadius: 6,
+                    background: level === food.nutrition.sodium
+                      ? (level === 'L' ? '#7CA982' : level === 'M' ? '#E5A557' : '#C77843')
+                      : ctx.theme.bgSoft,
+                  }}/>
+                ))}
+                <span style={{ marginLeft: 8, fontSize: fz(ctx, 20), fontWeight: 700, color: ctx.theme.text }}>
+                  {food.nutrition.sodium === 'L' ? '낮음' : food.nutrition.sodium === 'M' ? '보통' : '높음'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NutrientCard({ ctx, label, value, color }) {
+  return (
+    <div style={{
+      background: ctx.theme.card, borderRadius: 18,
+      border: `1.5px solid ${ctx.theme.border}`,
+      padding: '16px 8px', textAlign: 'center',
+    }}>
+      <div style={{ width: 12, height: 12, borderRadius: 999, background: color, margin: '0 auto 6px' }}/>
+      <div style={{ fontSize: fz(ctx, 16), color: ctx.theme.textSoft, fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: fz(ctx, 24), color: ctx.theme.text, fontWeight: 800, marginTop: 2 }}>{value}</div>
+    </div>
+  );
+}
+
+function HistoryScreen({ ctx }) {
+  return (
+    <div data-screen-label="05 기록" style={{ minHeight: '100%', background: ctx.theme.bg }}>
+      <TopBar ctx={ctx} title="지난 추천 기록" onBack={() => ctx.go('home')}/>
+
+      <div style={{ padding: '18px 20px' }}>
+        <div style={{
+          background: ctx.theme.card, borderRadius: 22,
+          border: `1.5px solid ${ctx.theme.border}`,
+          padding: '20px 22px', marginBottom: 18,
+          display: 'flex', alignItems: 'center', gap: 16,
+        }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 16,
+            background: ctx.theme.bgSoft, color: ctx.theme.accentDark,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 28, fontWeight: 800,
+          }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="5" width="18" height="16" rx="2" stroke={ctx.theme.accentDark} strokeWidth="2"/>
+              <path d="M8 3v4M16 3v4M3 10h18" stroke={ctx.theme.accentDark} strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: fz(ctx, 22), fontWeight: 800, color: ctx.theme.text }}>이번 주에</div>
+            <div style={{ fontSize: fz(ctx, 22), fontWeight: 800, color: ctx.theme.accentDark }}>
+              {ctx.history.filter(h => h.foodId).length}가지 음식을 추천받았어요
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {ctx.history.map((h, i) => {
+            const f = FOODS.find(x => x.id === h.foodId);
+            const empty = !f;
+            return (
+              <button key={i} onClick={() => !empty && ctx.openFood(f)}
+                disabled={empty}
+                style={{
+                  background: empty ? ctx.theme.bgSoft : ctx.theme.card,
+                  border: `1.5px solid ${ctx.theme.border}`,
+                  borderRadius: 22, padding: 14, minHeight: 96,
+                  display: 'flex', alignItems: 'center', gap: 16,
+                  cursor: empty ? 'default' : 'pointer',
+                  textAlign: 'left',
+                }}>
+                {empty ? (
+                  <div style={{
+                    width: 72, height: 72, borderRadius: 16,
+                    border: `2px dashed ${ctx.theme.border}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: ctx.theme.textSoft, fontSize: 24,
+                  }}>＋</div>
+                ) : (
+                  <div style={{ width: 72, height: 72, flexShrink: 0 }}>
+                    <FoodPhoto food={f} size="small"/>
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: fz(ctx, 17), color: ctx.theme.textSoft, fontWeight: 600 }}>
+                    {h.date}
+                  </div>
+                  <div style={{ fontSize: fz(ctx, 22), color: ctx.theme.text, fontWeight: 800, marginTop: 2 }}>
+                    {empty ? '아직 추천을 받지 않았어요' : f.name}
+                  </div>
+                </div>
+                {!empty && (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 5l7 7-7 7" stroke={ctx.theme.textSoft} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HealthScreen({ ctx }) {
+  const [conditions, setConditions] = React.useState(ctx.health.conditions);
+  const [bp,    setBp]    = React.useState(ctx.health.bp);
+  const [sugar, setSugar] = React.useState(ctx.health.sugar);
+
+  const allConditions = [
+    { id: 'bp',     label: '고혈압',  icon: '♥' },
+    { id: 'sugar',  label: '당뇨',    icon: '◆' },
+    { id: 'chol',   label: '고지혈증', icon: '◯' },
+    { id: 'teeth',  label: '치아 약함', icon: '◐' },
+    { id: 'kidney', label: '신장',    icon: '◑' },
+    { id: 'none',   label: '없음',    icon: '✓' },
+  ];
+
+  const toggle = (id) => {
+    setConditions(prev => {
+      if (id === 'none') return ['none'];
+      const next = prev.filter(x => x !== 'none');
+      return next.includes(id) ? next.filter(x => x !== id) : [...next, id];
+    });
+  };
+
+  const save = () => {
+    ctx.setHealth({ conditions, bp, sugar });
+    ctx.go('home');
+  };
+
+  return (
+    <div data-screen-label="06 건강정보" style={{ minHeight: '100%', background: ctx.theme.bg }}>
+      <TopBar ctx={ctx} title="내 건강 정보" onBack={() => ctx.go('home')} />
+
+      <div style={{ padding: '18px 20px 28px' }}>
+        <div style={{ fontSize: fz(ctx, 22), color: ctx.theme.text, fontWeight: 700, marginBottom: 8 }}>
+          어떤 점에 신경 쓰시나요?
+        </div>
+        <div style={{ fontSize: fz(ctx, 17), color: ctx.theme.textSoft, marginBottom: 16 }}>
+          여러 개 고르셔도 괜찮아요
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {allConditions.map(c => {
+            const on = conditions.includes(c.id);
+            return (
+              <button key={c.id} onClick={() => toggle(c.id)} style={{
+                background: on ? ctx.theme.accent : ctx.theme.card,
+                color: on ? '#fff' : ctx.theme.text,
+                border: `2px solid ${on ? ctx.theme.accent : ctx.theme.border}`,
+                borderRadius: 20, padding: '20px 12px', minHeight: 104,
+                cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+              }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 14,
+                  background: on ? 'rgba(255,255,255,0.22)' : ctx.theme.bgSoft,
+                  color: on ? '#fff' : ctx.theme.accentDark,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 24, fontWeight: 800,
+                }}>{c.icon}</div>
+                <div style={{ fontSize: fz(ctx, 20), fontWeight: 800 }}>{c.label}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ marginTop: 28, fontSize: fz(ctx, 22), fontWeight: 700, color: ctx.theme.text, marginBottom: 12 }}>
+          최근 측정 값 (선택)
+        </div>
+
+        <NumberField ctx={ctx} label="혈압 (수축기)" value={bp} setValue={setBp} unit="mmHg" />
+        <div style={{ height: 12 }}/>
+        <NumberField ctx={ctx} label="혈당" value={sugar} setValue={setSugar} unit="mg/dL" />
+
+        <div style={{ marginTop: 28 }}>
+          <BigButton ctx={ctx} onClick={save}>저장하기</BigButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NumberField({ ctx, label, value, setValue, unit }) {
+  return (
+    <div style={{
+      background: ctx.theme.card, borderRadius: 20,
+      border: `1.5px solid ${ctx.theme.border}`,
+      padding: '14px 14px 14px 20px',
+      display: 'flex', alignItems: 'center', gap: 12,
+    }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: fz(ctx, 17), color: ctx.theme.textSoft, fontWeight: 600 }}>{label}</div>
+        <div style={{ fontSize: fz(ctx, 32), fontWeight: 800, color: ctx.theme.text }}>
+          {value} <span style={{ fontSize: fz(ctx, 18), color: ctx.theme.textSoft, fontWeight: 600 }}>{unit}</span>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={() => setValue(v => Math.max(0, v - 1))}
+          aria-label="줄이기"
+          style={{
+            width: 64, height: 64, borderRadius: 16, border: 'none',
+            background: ctx.theme.bgSoft, color: ctx.theme.accentDark,
+            fontSize: 32, fontWeight: 800, cursor: 'pointer',
+          }}>−</button>
+        <button onClick={() => setValue(v => v + 1)}
+          aria-label="늘리기"
+          style={{
+            width: 64, height: 64, borderRadius: 16, border: 'none',
+            background: ctx.theme.accent, color: '#fff',
+            fontSize: 32, fontWeight: 800, cursor: 'pointer',
+          }}>＋</button>
+      </div>
+    </div>
+  );
+}
+
+function SettingsScreen({ ctx }) {
+  return (
+    <div data-screen-label="07 설정" style={{ minHeight: '100%', background: ctx.theme.bg }}>
+      <TopBar ctx={ctx} title="설정" onBack={() => ctx.go('home')} />
+
+      <div style={{ padding: '18px 20px 28px' }}>
+        <SectionHeader ctx={ctx} text="글씨 크기" />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+          {Object.entries(SIZE_SCALE).map(([k, v]) => {
+            const on = ctx.fontKey === k;
+            return (
+              <button key={k} onClick={() => ctx.setFontKey(k)} style={{
+                background: on ? ctx.theme.accent : ctx.theme.card,
+                color: on ? '#fff' : ctx.theme.text,
+                border: `2px solid ${on ? ctx.theme.accent : ctx.theme.border}`,
+                borderRadius: 18, padding: '18px 8px', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+              }}>
+                <div style={{ fontSize: Math.round(20 * v.mult), fontWeight: 900 }}>가</div>
+                <div style={{ fontSize: fz(ctx, 17), fontWeight: 700 }}>{v.label}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        <SectionHeader ctx={ctx} text="음성 안내" />
+        <SettingsRow ctx={ctx} label="음성으로 읽어주기 버튼 보이기"
+          right={<Switch ctx={ctx} on={ctx.voiceVisible} onChange={v => ctx.setVoiceVisible(v)} />} />
+
+        <SectionHeader ctx={ctx} text="가족" />
+        <SettingsRow ctx={ctx} label="가족에게 공유하기"
+          onClick={() => ctx.go('share')}
+          right={<svg width="24" height="24" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke={ctx.theme.textSoft} strokeWidth="2.5" strokeLinecap="round" fill="none"/></svg>}/>
+        <SettingsRow ctx={ctx} label="등록된 가족: 딸 김미영"
+          right={<span style={{ fontSize: fz(ctx, 17), color: ctx.theme.accentDark, fontWeight: 700 }}>변경</span>}/>
+
+        <div style={{ marginTop: 24, fontSize: fz(ctx, 16), color: ctx.theme.textSoft, textAlign: 'center' }}>
+          오늘의 식단 · 버전 1.0
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({ ctx, text }) {
+  return (
+    <div style={{ marginTop: 22, marginBottom: 10, fontSize: fz(ctx, 18), color: ctx.theme.textSoft, fontWeight: 700, letterSpacing: 0.4 }}>
+      {text}
+    </div>
+  );
+}
+
+function SettingsRow({ ctx, label, right, onClick }) {
+  return (
+    <div onClick={onClick} style={{
+      background: ctx.theme.card, borderRadius: 18,
+      border: `1.5px solid ${ctx.theme.border}`,
+      padding: '18px 20px', minHeight: 68,
+      marginBottom: 8,
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+      cursor: onClick ? 'pointer' : 'default',
+    }}>
+      <div style={{ fontSize: fz(ctx, 20), fontWeight: 600, color: ctx.theme.text }}>{label}</div>
+      {right}
+    </div>
+  );
+}
+
+function Switch({ ctx, on, onChange }) {
+  return (
+    <button onClick={() => onChange(!on)} style={{
+      width: 64, height: 36, borderRadius: 999, border: 'none',
+      background: on ? ctx.theme.accent : '#D5C9B5',
+      position: 'relative', cursor: 'pointer', transition: 'background 0.2s',
+    }}>
+      <span style={{
+        position: 'absolute', top: 3, left: on ? 31 : 3,
+        width: 30, height: 30, borderRadius: '50%',
+        background: '#fff', transition: 'left 0.2s',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      }}/>
+    </button>
+  );
+}
+
+function ShareModal({ ctx, onClose }) {
+  const [sent, setSent] = React.useState(false);
+  const food = ctx.currentFood;
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 100,
+      background: 'rgba(45, 32, 23, 0.55)',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      animation: 'fadeIn 0.25s',
+    }} onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} style={{
+        width: '100%', background: ctx.theme.bg,
+        borderTopLeftRadius: 32, borderTopRightRadius: 32,
+        padding: '24px 22px 32px',
+        animation: 'floatUp 0.32s cubic-bezier(.2,.7,.2,1)',
+      }}>
+        <div style={{ width: 56, height: 5, borderRadius: 999, background: ctx.theme.border, margin: '0 auto 18px' }}/>
+
+        {sent ? (
+          <div style={{ textAlign: 'center', padding: '28px 12px' }}>
+            <div style={{
+              width: 96, height: 96, borderRadius: '50%', margin: '0 auto 18px',
+              background: ctx.theme.accent, color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12l5 5 9-10" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div style={{ fontSize: fz(ctx, 30), fontWeight: 800, color: ctx.theme.text }}>
+              잘 보냈어요
+            </div>
+            <div style={{ fontSize: fz(ctx, 19), color: ctx.theme.textSoft, marginTop: 8 }}>
+              딸 미영 님에게 전달했어요
+            </div>
+            <div style={{ marginTop: 22 }}>
+              <BigButton ctx={ctx} onClick={onClose}>확인</BigButton>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize: fz(ctx, 26), fontWeight: 800, color: ctx.theme.text, textAlign: 'center' }}>
+              가족에게 보낼까요?
+            </div>
+            <div style={{ fontSize: fz(ctx, 18), color: ctx.theme.textSoft, textAlign: 'center', marginTop: 6 }}>
+              오늘의 추천을 알려드릴게요
+            </div>
+
+            <div style={{
+              background: ctx.theme.card, borderRadius: 20,
+              border: `1.5px solid ${ctx.theme.border}`,
+              padding: '16px 18px', marginTop: 18,
+              display: 'flex', alignItems: 'center', gap: 14,
+            }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #E89B5F, #C77843)',
+                color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 24, fontWeight: 800,
+              }}>딸</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: fz(ctx, 22), fontWeight: 800, color: ctx.theme.text }}>김미영</div>
+                <div style={{ fontSize: fz(ctx, 17), color: ctx.theme.textSoft }}>010-1234-5678</div>
+              </div>
+              <div style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: ctx.theme.accent, color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 20, fontWeight: 800,
+              }}>✓</div>
+            </div>
+
+            {food && (
+              <div style={{
+                marginTop: 14, padding: 16,
+                background: ctx.theme.bgSoft, borderRadius: 20,
+                display: 'flex', alignItems: 'center', gap: 14,
+              }}>
+                <div style={{ width: 68, height: 68 }}>
+                  <FoodPhoto food={food} size="small"/>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: fz(ctx, 16), color: ctx.theme.textSoft, fontWeight: 600 }}>오늘의 추천</div>
+                  <div style={{ fontSize: fz(ctx, 21), fontWeight: 800, color: ctx.theme.text }}>{food.name}</div>
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginTop: 22, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <BigButton ctx={ctx} onClick={() => setSent(true)}>보내기</BigButton>
+              <BigButton ctx={ctx} variant="secondary" onClick={onClose}>취소</BigButton>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// app.jsx
+// ═══════════════════════════════════════════════════════════════
+
+const TWEAK_DEFAULTS = {
+  "fontKey": "large",
+  "paletteKey": "beige",
+  "buttonShape": "round",
+  "resultLayout": "text",
+  "voiceVisible": true
+};
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  const [screen, setScreen]   = React.useState('home');
+  const [showShare, setShare] = React.useState(false);
+
+  const [currentFood, setCurrentFood] = React.useState(null);
+  const [history, setHistory] = React.useState(HISTORY);
+
+  const [health, setHealth] = React.useState({
+    conditions: ['bp'],
+    bp: 132,
+    sugar: 108,
+  });
+
+  const go = (s) => {
+    if (s === 'share') { setShare(true); return; }
+    setScreen(s);
+  };
+
+  const recommend = () => {
+    setScreen('loading');
+    const pool = FOODS.filter(f => f.id !== currentFood?.id);
+    const next = pool[Math.floor(Math.random() * pool.length)];
+    setTimeout(() => {
+      setCurrentFood(next);
+      setHistory(prev => prev.map((h, i) =>
+        i === 0 ? { ...h, foodId: next.id } : h
+      ));
+      setScreen('result');
+    }, 1500);
+  };
+
+  const openFood = (food) => {
+    setCurrentFood(food);
+    setScreen('result');
+  };
+
+  const theme    = PALETTES[t.paletteKey];
+  const fontMult = SIZE_SCALE[t.fontKey].mult;
+
+  const ctx = {
+    theme, fontMult, fontKey: t.fontKey, setFontKey: (k) => setTweak('fontKey', k),
+    buttonShape: t.buttonShape,
+    resultLayout: t.resultLayout,
+    voiceVisible: t.voiceVisible, setVoiceVisible: (v) => setTweak('voiceVisible', v),
+    go, recommend, openFood,
+    currentFood, history,
+    health, setHealth,
+  };
+
+  React.useEffect(() => {
+    document.body.style.background = '#26211b';
+    document.body.style.fontFamily = "'Noto Sans KR', system-ui, sans-serif";
+  }, []);
+
+  return (
+    <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+      <AndroidDevice width={412} height={892}>
+        <div style={{
+          width: '100%', height: '100%',
+          fontFamily: "'Noto Sans KR', system-ui, sans-serif",
+          color: theme.text,
+          background: theme.bg,
+          position: 'relative', overflow: 'hidden',
+        }}>
+          {screen === 'home'     && <HomeScreen     ctx={ctx} />}
+          {screen === 'loading'  && <LoadingScreen  ctx={ctx} />}
+          {screen === 'result'   && <ResultScreen   ctx={ctx} />}
+          {screen === 'detail'   && <DetailScreen   ctx={ctx} />}
+          {screen === 'history'  && <HistoryScreen  ctx={ctx} />}
+          {screen === 'health'   && <HealthScreen   ctx={ctx} />}
+          {screen === 'settings' && <SettingsScreen ctx={ctx} />}
+
+          {showShare && <ShareModal ctx={ctx} onClose={() => setShare(false)} />}
+        </div>
+      </AndroidDevice>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="글씨 크기" />
+        <TweakRadio
+          label="크기"
+          value={t.fontKey}
+          options={[
+            { label: '보통', value: 'normal' },
+            { label: '크게', value: 'large' },
+            { label: '아주 크게', value: 'xlarge' },
+          ]}
+          onChange={(v) => setTweak('fontKey', v)}
+        />
+
+        <TweakSection label="색감" />
+        <TweakColor
+          label="팔레트"
+          value={[theme.bg, theme.accent, theme.accentDark]}
+          options={[
+            ['#F5EBDD', '#E89B5F', '#C77843'],
+            ['#FAF3E7', '#D88A55', '#B36F3E'],
+            ['#FBE8D6', '#E5916A', '#C26F4B'],
+          ]}
+          onChange={(v) => {
+            const idx = ['#F5EBDD','#FAF3E7','#FBE8D6'].indexOf(v[0]);
+            setTweak('paletteKey', ['beige','cream','apricot'][idx] || 'beige');
+          }}
+        />
+
+        <TweakSection label="버튼 모양" />
+        <TweakRadio
+          label="모양"
+          value={t.buttonShape}
+          options={[
+            { label: '원형', value: 'round' },
+            { label: '사각', value: 'square' },
+          ]}
+          onChange={(v) => setTweak('buttonShape', v)}
+        />
+
+        <TweakSection label="결과 레이아웃" />
+        <TweakRadio
+          label="배치"
+          value={t.resultLayout}
+          options={[
+            { label: '사진 위주', value: 'photo' },
+            { label: '글자 위주', value: 'text' },
+          ]}
+          onChange={(v) => setTweak('resultLayout', v)}
+        />
+
+        <TweakSection label="음성 안내" />
+        <TweakToggle
+          label="음성 버튼 표시"
+          value={t.voiceVisible}
+          onChange={(v) => setTweak('voiceVisible', v)}
+        />
+
+        <TweakSection label="화면 이동 (체험용)" />
+        <TweakButton label="메인" onClick={() => { setScreen('home'); setShare(false); }} />
+        <TweakButton label="결과 화면 미리보기" onClick={() => {
+          setCurrentFood(FOODS[0]);
+          setScreen('result');
+          setShare(false);
+        }} />
+        <TweakButton label="상세 화면" onClick={() => {
+          if (!currentFood) setCurrentFood(FOODS[0]);
+          setScreen('detail');
+          setShare(false);
+        }} />
+        <TweakButton label="기록 화면" onClick={() => { setScreen('history'); setShare(false); }} />
+        <TweakButton label="건강정보 화면" onClick={() => { setScreen('health'); setShare(false); }} />
+        <TweakButton label="설정 화면" onClick={() => { setScreen('settings'); setShare(false); }} />
+        <TweakButton label="공유 모달 열기" onClick={() => {
+          if (!currentFood) setCurrentFood(FOODS[0]);
+          setShare(true);
+        }} />
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+</script>
+
+</body>
+</html>
